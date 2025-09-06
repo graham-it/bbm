@@ -1,14 +1,16 @@
 # BASIC Boot Maker
-...a C64 tool to make auto-executable programs in BASIC text area.
+...a C64 tool to make auto-executable programs in BASIC text area
 
 Version 1.04\
 Released on September 2, 2025
 
 Copyright (c) 2025 Graham (Francesco Gramignani)\
-https://graham-it.itch.io
+https://graham-it.itch.io/bbm \
+https://github.com/graham-it/bbm \
+https://csdb.dk/release/?id=255831
 
 ## Not only BASIC
-Source file could also be an M/L code program launched by a "BASIC stub"!
+Source file could also be an M/L code program launched by a "BASIC stub".
 
 ## Overview
 This tool uses an undocumented (and probably never released) exploit into LOAD command routine of KERNAL ROM, to auto-execute a program file through CHRGET routine, EAL pointer and screen RAM manipulation.
