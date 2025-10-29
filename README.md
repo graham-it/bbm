@@ -1,6 +1,8 @@
 # BASIC Boot Maker
 ...a C64 tool to make auto-executable programs in BASIC text area
 
+![](/pics/bbm105_dir.png)
+
 Version 1.05\
 Released on October 28, 2025
 
