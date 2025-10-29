@@ -1,0 +1,218 @@
+CHRGET Boot for C64
+===================
+
+Document revision: 1.03
+Last updated: October 29, 2025
+First release: August 14, 2025 (Dir Browser v1.07)
+Author: Graham (Francesco Gramignani)
+
+CHRGET Boot uses an undocumented (and probably never implemented before)
+exploit into LOAD command routine of KERNAL ROM, to auto-execute a program file
+through TXTPTR (into CHRGET routine), EAL pointer and screen RAM manipulation.
+
+CHRGET Boot can be applied to a program that resides on BASIC text RAM, it
+could be a complete BASIC program or a simple BASIC stub normally used to
+launch M/L code, concatenated in the same file.
+
+To make auto-executable an existing program, a header is applied on top of it,
+removing the first two bytes indicating the original load address.
+The generated auto-executable program then must be loaded with the following
+command:
+
+	LOAD"filename",n,1
+
+where 'n' is the device address, and '1' indicates that the file will be loaded
+into its own address memory, not BASIC relocated.
+
+
+How it works
+============
+
+During LOAD process some crucial locations are overwritten:
+
+- TXTTAB ($2B,$2C) is forced to $0801 Pointer to the Start of BASIC Program Text
+  (This is not strictly required, but was added for robustness and consistency)
+
+- Following BASIC pointers must be specified to allow a BASIC program to work
+  properly, otherwise new variables created could overwrite the program itself:
+
+  VARTAB ($2D,$2E) Pointer to the Start of the BASIC Variable Storage Area
+  ARYTAB ($2F,$30) Pointer to the Start of the BASIC Array Storage Area
+  STREND ($31,$32) Pointer to End of the BASIC Array Storage Area (+1)
+
+  This three pointers must contain the (same) address of the end of the
+  program in memory.
+  Normally VARTAB ($2D,$2E) is updated by the LOAD command routine, before
+  returning to the BASIC prompt. Then, after a RUN, the CLR routine duplicates
+  the same value to the other two pointers.
+  This is not required in case of a BASIC stub used to launch a pure M/L code
+  program, that do not uses BASIC pointers.
+
+- CHRGET Subroutine: Get Next BASIC Text Character (24 bytes, starting from $73)
+  TXTPTR ($7A,$7B) is forced to $0800 (an arbitrary but familiar value).
+
+  In direct mode, after the user enters the LOAD command, TXTPTR assumes
+  the value of $0200 that points to BUF, the BASIC Line Editor Input Buffer.
+  A value different from $02 in the hi-byte part of TXTPTR ($7B) simulates
+  the RUN mode.
+  That value triggers the autorun at the end of the LOAD process!
+
+- MSGFLG ($9D) Kernal Message Control Flag is forced to $00 (no messages)
+  (default value: $80 = control messages on, as in direct mode)
+
+- TIME ($A0) Software Jiffy Clock will be reset to zero (unavoidable)
+
+- EAL pointer ($ae/af) is forced $07af, so the next bytes are loaded into
+  Video Screen Memory Area, starting from $07b0 (in the middle of the second
+  last screen row).
+  This thing is being exploited to display a message on the last line of the
+  screen to inform the user that the booting process has taken place.
+
+- Then the actual program is loaded from its original location, in the BASIC
+  area ($0801).
+
+At the end of loading process, done by Kernal LOAD routine ($F49E), the BASIC
+LOAD command ($E168) checks the value of TXTPTR+1:
+	$02 = direct mode
+	any other = RUN mode
+
+A value different from $02, as $08 specified into the boot header, forces the
+BASIC interpreter to start the BASIC program just loaded into memory.
+Then TXTPTR is set according to TXTTAB ($2B,$2C) the Pointer to the Start of
+BASIC Program Text.
+Finally the loaded BASIC program is executed from start, without the need to
+type RUN.
+
+Boot message may have different behaviour depending on Kernal revision:
+	rev1: text displayed in white color
+	rev2: not visible due to foreground color same as background
+	rev3: regular appearance
+
+To facilitate the creation of auto-executable files, the Commodore 64 tool
+"BASIC Boot Maker", written entirely in assembler by the same author, is
+available for free download.
+
+
+CHRGET Boot Header
+==================
+
+;header size = 216 bytes	load address [2], zero page [133], screen RAM [56], other [25]
+;overhead = 214 bytes		(original load address is replaced by the new one)
+
+	!by $2b,$00		;load address (TXTTAB)
+
+;(starting from TXTTAB is not strictly required, added for completeness)
+	!by $01,$08		;$2b	TXTTAB	Pointer to the Start of BASIC Program Text
+
+;BASIC pointers (to be set according to end of program address)
+	!by $03,$08		;$2d	VARTAB	Pointer to the Start of the BASIC Variable Storage Area
+	!by $03,$08		;$2f	ARYTAB	Pointer to the Start of the BASIC Array Storage Area
+	!by $03,$08		;$31	STREND	Pointer to End of the BASIC Array Storage Area (+1)
+pointers_len = * - boot_ptrs
+
+;(cold start zero page values)
+	!by $00,$a0		;$33	FRETOP	Pointer to the Bottom of the String Text Storage Area
+	!by $00,$00		;$35	FRESPC	Temporary Pointer for Strings
+	!by $00,$a0		;$37	MEMSIZ	Pointer to the Highest Address Used by BASIC
+	!by $00,$00		;$39	CURLIN	Current BASIC Line Number
+	!by $00,$00		;$3b	OLDLIN	Previous BASIC Line Number
+	!by $00,$00		;$3d	OLDTXT	Pointer to the Address of the Current BASIC Statement
+	!by $00,$00		;$3f	DATLIN	Current DATA Line Number
+	!by $00,$08		;$41	DATPTR	Pointer to the Address of the Current DATA Item
+	!by $00,$00		;$43	INPPTR	Pointer to the Source of GET, READ, or INPUT Information
+	!by $00,$00		;$45	VARNAM	Current BASIC Variable Name
+	!by $24,$00		;$47	VARPNT	Pointer to the Current BASIC Variable Value
+	!by $00,$00		;$49	FORPNT	Temporary Pointer to the Index Variable Used by FOR
+	!by $00,$00		;$4b	OPPTR	Math Operator Table Displacement
+	!by $00			;$4d	OPMASK	Mask for Comparison Operation
+	!by $00,$00		;$4e	DEFPNT	Pointer to the Current FN Descriptor
+	!by $00,$00,$00		;$50	DSCPNT	Temporary Pointer to the Current String Descriptor (3 bytes)
+	!by $03			;$53	FOUR6	Constant for Garbage Collection
+	!by $4c,$00,$00		;$54	JMPER	Jump to Function Instruction (3 bytes)
+	!by $00,$00,$00,$00,$00	;$57	TEMPF1	BASIC Numeric Work Area (10 bytes)
+	!by $00,$fc,$00,$00,$00	;...	 "	 "
+	!by $0a,$76,$a3		;$61	FAC1	Floating Point Accumulator #1 (6 bytes)
+	!by $19,$00,$20		;...	 "	 "
+	!by $00			;$67	SGNFLG	Number of Terms in a Series Evaluation
+	!by $00			;$68	BITS	Floating Point Accumulator #1: Overflow Digit
+	!by $80,$00,$00		;$69	FAC2	Floating Point Accumulator #2 (6 bytes)
+	!by $00,$04,$00		;...	 "	 "
+	!by $76			;$6f	ARISGN	Result of a Sign Comparison of Accumulator #1 to Accumulator #2
+	!by $00			;$70	FACOV	Low Order Mantissa Byte of Floating Point Accumulator #1
+	!by $80,$a3		;$71	FBUFPT	Series Evaluation Pointer (2 bytes)
+
+;CHRGET Subroutine: Get Next BASIC Text Character (24 bytes, unaltered except TXTPTR)
+	!by $e6,$7a		;$73	inc $7a
+	!by $d0,$02		;$75	bne $79
+	!by $e6,$7b		;$77	inc $7b
+	!by $ad,$00,$08		;$79	lda TXTPTR 	Pointer to Current Text Character (MSB at $7b)
+	!by $c9,$3a		;$7c	cmp #$3a	($02 = direct mode, any other value = RUN mode)
+	!by $b0,$0a		;$7e	bcs $8a
+	!by $c9,$20		;$80	cmp #$20
+	!by $f0,$ef		;$82	beq $73
+	!by $38			;$84	sec
+	!by $e9,$30		;$85	sbc #$30
+	!by $38			;$87	sec
+	!by $e9,$d0		;$88	sbc #$d0
+	!by $60			;$8a	rts
+
+;(other cold start zero page values)
+	!by $80,$4f,$c7,$52,$58	;$8b	RNDX	RND Function Seed Value (5 bytes)
+	!by $00		 	;$90	STATUS	Kernal I/O Status Word (ST)
+	!by $ff			;$91	STKEY	Flag: Was STOP Key Pressed? ($ff = no key pressed)
+	!by $00		 	;$92	SVXT	Timing Constant for Tape Reads
+	!by $00		 	;$93	VERCK	Flag for Load Routine (0 = LOAD, 1 = VERIFY)
+	!by $00		 	;$94	C3P0	Flag: Serial Bus-Output Character Was Buffered
+	!by $00		 	;$95	BSOUR	Buffered Character for Serial Bus
+	!by $00		 	;$96	SYNO	Cassette Block Synchronization Number
+	!by $00		 	;$97	XSAV	Temporary .X Register Save Area
+	!by $00			;$98	LDTND	Number of Open I/O Files/Index to the End of File Tables
+	!by $00			;$99	DFLTN	Default Input Device (0 = Keyboard)
+	!by $03			;$9a	DFLTO	Default Output (CMD) Device ($03 = Screen)
+	!by $00		 	;$9b	PRTY	Tape Character Parity
+	!by $00		 	;$9c	DPSW	Flag: Tape Byte Received
+	!by $00			;$9d	MSGFLG	Flag: Kernal Message Control ($00 = no messages, as in RUN mode)
+				;...		($80 = control messages on, as in direct mode)
+	!by $00		 	;$9e	PTR1	Tape Pass 1 Error Log Index
+	!by $00		 	;$9f	PTR2	Tape Pass 2 Error Log Correction Index
+	!by $00,$00,$00		;$a0	TIME	Software Jiffy Clock (3 bytes, NOTE: reset to zero)
+	!by $00,$00		;$a3	PCNTR	Temporary Data Storage Area (2 bytes)
+	!by $00		 	;$a5	CNTDN	Cassette Synchronization Character Countdown
+	!by $00		 	;$a6	BUFPNT	Count of Characters in Tape I/O Buffer
+	!by $00		 	;$a7	INBIT	RS-232 Input Bits/Cassette Temporary Storage Area
+	!by $00		 	;$a8	BITCI	RS-232 Input Bit Count/Cassette Temporary Storage
+	!by $00		 	;$a9	RINONE	RS-232 Flag: Check for Start Bit
+	!by $00		 	;$aa	RIDATA	RS-232 Input Byte Buffer/Cassette Temporary Storage
+	!by $00		 	;$ab	RIPRTY	RS-232 Input Parity/Cassette Leader Counter
+	!by $00,$00		;$ac	SAL	Pointer to the Starting Address of a Load/Screen Scrolling
+	!by $ae,$07		;$ae	EAL	Pointer to Ending Address of Load (End of Program)
+
+;Writing a value of $07 into EAL (hi-byte) forces Kernal LOAD routine
+;to store the following bytes starting from $7b0
+
+;Video Screen Memory Area (NOTE: these are screen codes!)
+	!by $20,$20,$20,$20,$20,$20,$20,$20	;$7b0	blank spaces (16 bytes)
+	!by $20,$20,$20,$20,$20,$20,$20,$20	;....	(part of the second last screen row)
+
+;Editable boot message (displayed at the bottom of screen during loading)
+	!by $20,$20,$20,$20,$20,$20,$20,$20	;$7c0	last screen row (40 bytes)
+	!by $20,$20,$20,$20,$20,$20,$20,$20
+	!by $20,$20,$20,$20,$20,$20,$20,$20
+	!by $20,$20,$20,$20,$20,$20,$20,$20
+	!by $20,$20,$20,$20,$20,$20,$20,$20	;....	(end of screen RAM)
+
+;(cold start values between screen RAM and BASIC text)
+	!by $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff	;$7e8	unused locations (16 bytes)
+	!by $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff
+
+	!by $ff,$ff,$ff,$ff,$ff,$ff,$ff,$ff	;$7f8	Sprite Shape Data Pointers (8 bytes)	
+	!by $00        				;$800	Begin of BASIC Text Area (must be $00)
+						;$801	Source BASIC program starts here
+
+========================================
+
+Copyright (c) 2025 Graham (Francesco Gramignani)
+
+https://graham-it.itch.io
+https://github.com/graham-it
+https://csdb.dk/scener/?id=40810
