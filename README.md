@@ -15,9 +15,9 @@ LOAD"file name",n,1
 where 'n' is the device address, and '1' indicates that the file will be loaded into its own address memory.
 
 ## Features
-    Full navigable directory via up/down cursor keys;
-    Editable boot message and target file name;
-    Data buffer to reduce head seeking during disk access.
+- Full navigable directory via up/down cursor keys;
+- Editable boot message and target file name;
+- Data buffer to reduce head seeking during disk access.
 
 Copyright (c) 2025 Graham (Francesco Gramignani)\
 
