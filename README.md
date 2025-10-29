@@ -4,7 +4,7 @@
 [![](https://img.youtube.com/vi/lcbM7BnLqNE/0.jpg)](https://www.youtube.com/watch?v=lcbM7BnLqNE)
 
 Version 1.05\
-Released on October 28, 2025 \
+Released on October 29, 2025 \
 Copyright (c) 2025 Graham (Francesco Gramignani)
 
 ## Not only BASIC
@@ -32,7 +32,7 @@ where 'n' is the device address, and '1' indicates that the file will be loaded 
 - Claudio Daffra (projectCD.Chronicles) \
   https://github.com/ClaudioDaffra
 
-## Personal Links
+## Links
 - https://graham-it.itch.io
 - https://github.com/graham-it
 - https://csdb.dk/scener/?id=40810
