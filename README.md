@@ -4,10 +4,11 @@
 [![](https://img.youtube.com/vi/lcbM7BnLqNE/0.jpg)](https://www.youtube.com/watch?v=lcbM7BnLqNE)
 
 Version 1.05\
-Released on October 28, 2025
+Released on October 28, 2025 \
+Copyright (c) 2025 Graham (Francesco Gramignani)
 
 ## Not only BASIC
-Source file could also be a M/L code program launched by a BASIC stub!
+Source file could also be an M/L code program launched by a BASIC stub!
 
 ## Overview
 This tool uses an undocumented (and probably never implemented before) exploit into LOAD command routine of KERNAL ROM, to auto-execute a program without the need of typing RUN, after the following command:
@@ -21,9 +22,17 @@ where 'n' is the device address, and '1' indicates that the file will be loaded 
 - Editable boot message and target file name;
 - Data buffer to reduce head seeking during disk access.
 
-## Links
-https://graham-it.itch.io/bbm \
-https://github.com/graham-it/bbm \
-https://csdb.dk/release/?id=255831
+## Credits
+- Marco Baye (ACME 0.97 cross assembler) \
+  https://sourceforge.net/projects/acme-crossass
+- Leonardo Boselli (Mille e Una Avventura) \
+  www.youdev.it
+- Isaac Garcia Peveri (IGP Tech Blog) \
+  https://github.com/isacco1975
+- Claudio Daffra (projectCD.Chronicles) \
+  https://github.com/ClaudioDaffra
 
-Copyright (c) 2025 Graham (Francesco Gramignani)
+## Personal Links
+- https://graham-it.itch.io
+- https://github.com/graham-it
+- https://csdb.dk/scener/?id=40810
