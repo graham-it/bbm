@@ -21,6 +21,8 @@ where 'n' is the device address, and '1' indicates that the file will be loaded 
 - Editable boot message and target file name;
 - Data buffer to reduce head seeking during disk access.
 
+[![](https://img.youtube.com/vi/lcbM7BnLqNE/0.jpg)](https://www.youtube.com/watch?v=lcbM7BnLqNE)
+
 Copyright (c) 2025 Graham (Francesco Gramignani)
 
 https://graham-it.itch.io/bbm \
