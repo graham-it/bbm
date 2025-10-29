@@ -1,7 +1,7 @@
 # BASIC Boot Maker
 ...a C64 tool to make auto-executable programs in BASIC text area
 
-![](/pics/bbm105_dir.png)
+[![](https://img.youtube.com/vi/lcbM7BnLqNE/0.jpg)](https://www.youtube.com/watch?v=lcbM7BnLqNE)
 
 Version 1.05\
 Released on October 28, 2025
@@ -21,10 +21,9 @@ where 'n' is the device address, and '1' indicates that the file will be loaded 
 - Editable boot message and target file name;
 - Data buffer to reduce head seeking during disk access.
 
-[![](https://img.youtube.com/vi/lcbM7BnLqNE/0.jpg)](https://www.youtube.com/watch?v=lcbM7BnLqNE)
-
-Copyright (c) 2025 Graham (Francesco Gramignani)
-
+## Links
 https://graham-it.itch.io/bbm \
 https://github.com/graham-it/bbm \
 https://csdb.dk/release/?id=255831
+
+Copyright (c) 2025 Graham (Francesco Gramignani)
